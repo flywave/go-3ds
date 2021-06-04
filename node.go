@@ -12,7 +12,82 @@ type NodeNative struct {
 }
 
 func setNode(m *C.struct_Lib3dsNode, n Node) {
-
+	var ret *BaseNode
+	switch n.GetType() {
+	case NODE_AMBIENT_COLOR:
+		node := n.(*AmbientColorNode)
+		ret = &node.BaseNode
+		cnode := (*C.struct_Lib3dsAmbientColorNode)(unsafe.Pointer(m))
+		cnode.color = *((*[3]C.float)(unsafe.Pointer(&node.Color[0])))
+		setTrack(&cnode.color_track, node.ColorTrack)
+	case NODE_MESH_INSTANCE:
+		node := n.(*MeshInstanceNode)
+		ret = &node.BaseNode
+		cnode := (*C.struct_Lib3dsMeshInstanceNode)(unsafe.Pointer(m))
+		cnode.pivot = *((*[3]C.float)(unsafe.Pointer(&node.Pivot[0])))
+		cnode.bbox_min = *((*[3]C.float)(unsafe.Pointer(&node.BBoxMin[0])))
+		cnode.bbox_max = *((*[3]C.float)(unsafe.Pointer(&node.BBoxMax[0])))
+		cnode.hide = C.int(node.Hide)
+		cnode.pos = *((*[3]C.float)(unsafe.Pointer(&node.Pos[0])))
+		cnode.rot = *((*[4]C.float)(unsafe.Pointer(&node.Rot[0])))
+		cnode.scl = *((*[3]C.float)(unsafe.Pointer(&node.Scl[0])))
+		cnode.morph_smooth = C.float(node.MorphSmooth)
+		setTrack(&cnode.pos_track, node.PosTrack)
+		setTrack(&cnode.rot_track, node.RotTrack)
+		setTrack(&cnode.scl_track, node.SclTrack)
+		setTrack(&cnode.hide_track, node.HideTrack)
+		cname := *((*[64]byte)(unsafe.Pointer(&cnode.instance_name)))
+		copy(cname[:], []byte(node.InstanceName))
+		morphname := *((*[64]byte)(unsafe.Pointer(&cnode.morph)))
+		copy(morphname[:], []byte(node.Morph))
+	case NODE_CAMERA:
+		node := n.(*CameraNode)
+		ret = &node.BaseNode
+		cnode := (*C.struct_Lib3dsCameraNode)(unsafe.Pointer(m))
+		cnode.pos = *((*[3]C.float)(unsafe.Pointer(&node.Pos[0])))
+		cnode.fov = C.float(node.Fov)
+		cnode.roll = C.float(node.Roll)
+		setTrack(&cnode.pos_track, node.PosTrack)
+		setTrack(&cnode.fov_track, node.FovTrack)
+		setTrack(&cnode.roll_track, node.RollTrack)
+	case NODE_OMNILIGHT:
+		node := n.(*OmnilightNode)
+		ret = &node.BaseNode
+		cnode := (*C.struct_Lib3dsOmnilightNode)(unsafe.Pointer(m))
+		cnode.pos = *((*[3]C.float)(unsafe.Pointer(&node.Pos[0])))
+		setTrack(&cnode.pos_track, node.PosTrack)
+		cnode.color = *((*[3]C.float)(unsafe.Pointer(&node.Color[0])))
+		setTrack(&cnode.color_track, node.ColorTrack)
+	case NODE_SPOTLIGHT:
+		node := n.(*SpotlightNode)
+		ret = &node.BaseNode
+		cnode := (*C.struct_Lib3dsSpotlightNode)(unsafe.Pointer(m))
+		cnode.pos = *((*[3]C.float)(unsafe.Pointer(&node.Pos[0])))
+		setTrack(&cnode.pos_track, node.PosTrack)
+		cnode.color = *((*[3]C.float)(unsafe.Pointer(&node.Color[0])))
+		setTrack(&cnode.color_track, node.ColorTrack)
+		cnode.hotspot = C.float(node.Hotspot)
+		setTrack(&cnode.hotspot_track, node.HotspotTrack)
+		cnode.falloff = C.float(node.Falloff)
+		setTrack(&cnode.falloff_track, node.FalloffTrack)
+		cnode.roll = C.float(node.Roll)
+		setTrack(&cnode.roll_track, node.RollTrack)
+	case NODE_CAMERA_TARGET:
+	case NODE_SPOTLIGHT_TARGET:
+		node := n.(*TargetNode)
+		ret = &node.BaseNode
+		cnode := (*C.struct_Lib3dsTargetNode)(unsafe.Pointer(m))
+		cnode.pos = *((*[3]C.float)(unsafe.Pointer(&node.Pos[0])))
+		setTrack(&cnode.pos_track, node.PosTrack)
+	}
+	m.user_id = C.uint(ret.UserID)
+	m.user_ptr = unsafe.Pointer(ret.UserPtr)
+	m._type = C.Lib3dsNodeType(ret.Type)
+	m.node_id = C.ushort(ret.NodeId)
+	cname := *((*[64]byte)(unsafe.Pointer(&m.name)))
+	copy(cname[:], []byte(ret.Name))
+	m.flags = C.uint(ret.Flags)
+	m.matrix = *((*[4][4]C.float)(unsafe.Pointer(&ret.Matrix[0])))
 }
 
 func getNode(m *C.struct_Lib3dsNode) Node {
@@ -125,7 +200,13 @@ func newNodeNativeByNode(n Node) *NodeNative {
 }
 
 type Node interface {
+	GetName() string
+	GetNodeId() uint16
 	GetType() NodeType
+	GetNext() Node
+	GetChilds() Node
+	GetParent() Node
+	GetMatrix() *[4][4]float32
 }
 
 type BaseNode struct {
@@ -144,6 +225,30 @@ type BaseNode struct {
 
 func (n *BaseNode) GetType() NodeType {
 	return n.Type
+}
+
+func (n *BaseNode) GetNext() Node {
+	return n.Next.GetNode()
+}
+
+func (n *BaseNode) GetChilds() Node {
+	return n.Childs.GetNode()
+}
+
+func (n *BaseNode) GetParent() Node {
+	return n.Parent.GetNode()
+}
+
+func (n *BaseNode) GetNodeId() uint16 {
+	return n.NodeId
+}
+
+func (n *BaseNode) GetName() string {
+	return n.Name
+}
+
+func (n *BaseNode) GetMatrix() *[4][4]float32 {
+	return &n.Matrix
 }
 
 type AmbientColorNode struct {

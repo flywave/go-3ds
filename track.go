@@ -28,6 +28,23 @@ type Track struct {
 }
 
 func setTrack(m *C.struct_Lib3dsTrack, t Track) {
+	if m == nil {
+		return
+	}
+	if int(m.nkeys) != len(t.Keys) {
+		C.lib3ds_track_resize(m, C.int(len(t.Keys)))
+	}
+	m.flags = C.uint(t.Flags)
+	m._type = C.Lib3dsTrackType(t.Type)
+	m.nkeys = C.int(len(t.Keys))
+
+	var keysSlice []Key
+	facesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&keysSlice)))
+	facesHeader.Cap = int(m.nkeys)
+	facesHeader.Len = int(m.nkeys)
+	facesHeader.Data = uintptr(unsafe.Pointer(m.keys))
+
+	copy(keysSlice, t.Keys)
 }
 
 func getTrack(m *C.struct_Lib3dsTrack) Track {

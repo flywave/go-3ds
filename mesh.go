@@ -148,6 +148,9 @@ func (m *Mesh) setMesh(cm *C.struct_Lib3dsMesh) {
 }
 
 func (m *Mesh) setVertices(verts *[3]C.float, n int) {
+	if verts == nil {
+		return
+	}
 	var vertsSlice [][3]float32
 	vertsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&vertsSlice)))
 	vertsHeader.Cap = n
@@ -159,6 +162,9 @@ func (m *Mesh) setVertices(verts *[3]C.float, n int) {
 }
 
 func (m *Mesh) setTexCoords(texs *[2]C.float, n int) {
+	if texs == nil {
+		return
+	}
 	var texsSlice [][2]float32
 	texsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&texsSlice)))
 	texsHeader.Cap = n
@@ -170,6 +176,9 @@ func (m *Mesh) setTexCoords(texs *[2]C.float, n int) {
 }
 
 func (m *Mesh) setFaces(faces *C.struct_Lib3dsFace, n int) {
+	if faces == nil {
+		return
+	}
 	var facesSlice []Face
 	facesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&facesSlice)))
 	facesHeader.Cap = n
@@ -181,6 +190,9 @@ func (m *Mesh) setFaces(faces *C.struct_Lib3dsFace, n int) {
 }
 
 func (m *Mesh) setVFlags(vflags *C.ushort, n int) {
+	if vflags == nil {
+		return
+	}
 	var flagsSlice []uint16
 	flagsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&flagsSlice)))
 	flagsHeader.Cap = n
