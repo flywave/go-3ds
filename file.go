@@ -496,3 +496,22 @@ func (f *File) GetMinMaxNodeId() (min, max uint16) {
 func (f *File) CreateNodesForMeshes() {
 	C.lib3ds_file_create_nodes_for_meshes(f.m)
 }
+
+func (f *File) GetMeshInstanceNode() []*MeshInstanceNode {
+	var nds []Node
+	var cnd *C.struct_Lib3dsNode
+	cnd = f.m.nodes
+	for {
+		if cnd != nil {
+			n := NodeNative{m: cnd}
+			meshNd, ok := n.GetNode().(*MeshInstanceNode)
+			if ok {
+				nds = append(nds, meshNd)
+			}
+			cnd = cnd.next
+		} else {
+			break
+		}
+	}
+	return nds
+}
