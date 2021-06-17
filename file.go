@@ -498,7 +498,7 @@ func (f *File) CreateNodesForMeshes() {
 }
 
 func (f *File) GetMeshInstanceNode() []*MeshInstanceNode {
-	var nds []Node
+	var nds []*MeshInstanceNode
 	var cnd *C.struct_Lib3dsNode
 	cnd = f.m.nodes
 	for {
